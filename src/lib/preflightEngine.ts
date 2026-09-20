@@ -1,5 +1,6 @@
 import { Project, PreflightItem, PreflightResult } from '../types';
 import { extractProjectPalette } from './svgUtils';
+import { checkProjectSimilarity } from './similarityGuard';
 
 const BANNED_BRAND_KEYWORDS = [
   'adobe', 'apple', 'nike', 'google', 'tesla', 'microsoft', 'amazon',
@@ -7,7 +8,7 @@ const BANNED_BRAND_KEYWORDS = [
   'twitter', 'instagram', 'tiktok', 'coca-cola', 'pepsi'
 ];
 
-export function runAdobeStockPreflight(project: Project): PreflightResult {
+export function runAdobeStockPreflight(project: Project, existingProjects: Project[] = []): PreflightResult {
   const items: PreflightItem[] = [];
 
   // 1. FILE SECTION
@@ -302,6 +303,51 @@ export function runAdobeStockPreflight(project: Project): PreflightResult {
       status: 'pass',
       message: 'Marked as non-AI original vector creation. No AI disclosure flag necessary.',
     });
+  }
+
+  // 11. CATALOG SIMILARITY & DUPLICATE GUARD SECTION
+  if (existingProjects.length > 1) {
+    const simResult = checkProjectSimilarity(project, existingProjects);
+    if (simResult.hasMatches && simResult.topMatch) {
+      const top = simResult.topMatch;
+      if (simResult.flags.isColorOnlyVariant || simResult.worstSeverity === 'critical') {
+        items.push({
+          id: 'similarity-guard',
+          category: 'metadata',
+          title: 'Similarity Guard: Duplicate / Prohibited Variation Risk',
+          status: 'fail',
+          message: `Critical overlap (${top.overallScore}%) with existing project "${top.matchedProjectName}". Adobe Stock forbids near-identical geometry or color-only shifts.`,
+          detail: top.reasons.join(' '),
+          fixActionLabel: 'Inspect Differences'
+        });
+      } else if (simResult.worstSeverity === 'high') {
+        items.push({
+          id: 'similarity-guard',
+          category: 'metadata',
+          title: 'Similarity Guard: High Content Similarity Warning',
+          status: 'warning',
+          message: `Significant overlap (${top.overallScore}%) with "${top.matchedProjectName}". Ensure substantive conceptual or structural differentiation.`,
+          detail: top.reasons.join(' '),
+          fixActionLabel: 'Inspect Differences'
+        });
+      } else {
+        items.push({
+          id: 'similarity-guard',
+          category: 'metadata',
+          title: 'Similarity Guard: Catalog Differentiation Verified',
+          status: 'pass',
+          message: `Asset shows sufficient geometry and keyword differentiation from other catalog assets (Max proximity: ${top.overallScore}% with "${top.matchedProjectName}").`
+        });
+      }
+    } else {
+      items.push({
+        id: 'similarity-guard',
+        category: 'metadata',
+        title: 'Similarity Guard: Unique Portfolio Asset',
+        status: 'pass',
+        message: 'No similar assets detected in current workspace. Unique vector geometry confirmed.'
+      });
+    }
   }
 
   const failCount = items.filter(i => i.status === 'fail').length;

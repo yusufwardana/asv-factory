@@ -107,8 +107,8 @@ export default function App() {
         summary: 'No active project loaded.'
       };
     }
-    return runFullPreflight(currentProject);
-  }, [currentProject]);
+    return runFullPreflight(currentProject, projects);
+  }, [currentProject, projects]);
 
   // Update active project
   const handleUpdateCurrentProject = useCallback((updater: (prev: Project) => Project) => {
@@ -361,6 +361,7 @@ export default function App() {
             {/* Right Inspector & Quality Gate Panel */}
             <InspectorPanel
               project={currentProject}
+              allProjects={projects}
               onUpdateProject={handleUpdateCurrentProject}
               selectedSlotIndex={selectedSlotIndex}
               onSelectSlot={setSelectedSlotIndex}
@@ -500,6 +501,7 @@ export default function App() {
         isOpen={isPreflightOpen}
         onClose={() => setIsPreflightOpen(false)}
         project={currentProject}
+        allProjects={projects}
         preflight={currentPreflight}
         onUpdateProject={handleUpdateCurrentProject}
         onOpenMetadata={() => {

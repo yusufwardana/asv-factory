@@ -13,28 +13,38 @@ import {
   Copy, 
   ArrowRight,
   ShieldCheck,
-  Search
+  ShieldAlert,
+  Search,
+  Cpu,
+  FileText
 } from 'lucide-react';
 import { IconSlot, Project } from '../types';
 import { extractProjectPalette, PaletteItem } from '../lib/svgUtils';
+import { checkProjectSimilarity } from '../lib/similarityGuard';
+import { SimilarityAuditModal } from './SimilarityAuditModal';
 
 interface InspectorPanelProps {
   project: Project;
+  allProjects?: Project[];
   onUpdateProject: (updater: (prev: Project) => Project) => void;
   selectedSlotIndex: number | null;
   onSelectSlot: (index: number | null) => void;
 }
 
-type InspectorTab = 'vector' | 'palette' | 'strokes' | 'complexity' | 'thumbnails';
+type InspectorTab = 'vector' | 'palette' | 'strokes' | 'complexity' | 'similarity' | 'thumbnails';
 
 export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   project,
+  allProjects = [],
   onUpdateProject,
   selectedSlotIndex,
   onSelectSlot,
 }) => {
   const [activeTab, setActiveTab] = useState<InspectorTab>('vector');
+  const [showSimilarityModal, setShowSimilarityModal] = useState(false);
   const [mergeConfirmation, setMergeConfirmation] = useState<{ sourceHex: string; targetHex: string } | null>(null);
+
+  const similarityResult = checkProjectSimilarity(project, allProjects);
 
   const selectedSlot = selectedSlotIndex !== null ? project.slots[selectedSlotIndex] : project.slots[0];
   const palette = extractProjectPalette(project.slots);
@@ -167,6 +177,24 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-400" />
           <span>Quality</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('similarity')}
+          id="tab-similarity-guard"
+          className={`flex-1 py-1.5 px-2 rounded font-medium flex items-center justify-center gap-1 transition-colors relative ${
+            activeTab === 'similarity' ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-200'
+          }`}
+          title="Similarity Guard & Duplicate Check"
+        >
+          {similarityResult.worstSeverity === 'critical' || similarityResult.worstSeverity === 'high' ? (
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+          ) : (
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          )}
+          <span>Guard</span>
+          {similarityResult.hasMatches && similarityResult.highestScore >= 60 && (
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 absolute top-1 right-1" />
+          )}
         </button>
         <button
           onClick={() => setActiveTab('thumbnails')}
@@ -526,7 +554,90 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           </div>
         )}
 
-        {/* 5. THUMBNAIL TEST TAB */}
+        {/* 5. SIMILARITY GUARD TAB */}
+        {activeTab === 'similarity' && (
+          <div className="space-y-3.5">
+            <div>
+              <div className="font-semibold text-neutral-100 text-xs flex items-center justify-between">
+                <span>Catalog Similarity Guard</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                  similarityResult.worstSeverity === 'critical' || similarityResult.worstSeverity === 'high'
+                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                    : (similarityResult.worstSeverity === 'moderate' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40')
+                }`}>
+                  {similarityResult.highestScore}% PROXIMITY
+                </span>
+              </div>
+              <div className="text-[11px] text-neutral-400">
+                Prevents duplicate vector rejections by comparing subject and bezier geometry fingerprints.
+              </div>
+            </div>
+
+            {similarityResult.topMatch ? (
+              <div className="space-y-3">
+                <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800 space-y-2">
+                  <div className="text-[10px] uppercase text-neutral-400 font-semibold tracking-wider">
+                    Highest Proximity Catalog Asset
+                  </div>
+                  <div className="font-bold text-neutral-200 text-xs truncate">
+                    {similarityResult.topMatch.matchedProjectName}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[10.5px] font-mono pt-1">
+                    <div className="bg-neutral-900/90 p-1.5 rounded">
+                      <div className="text-neutral-400 text-[10px]">Subject Match</div>
+                      <div className="font-bold text-amber-400">{similarityResult.topMatch.subjectScore}%</div>
+                    </div>
+                    <div className="bg-neutral-900/90 p-1.5 rounded">
+                      <div className="text-neutral-400 text-[10px]">Geometry Match</div>
+                      <div className="font-bold text-cyan-400">{similarityResult.topMatch.geometryScore}%</div>
+                    </div>
+                  </div>
+
+                  {similarityResult.topMatch.isColorOnlyVariant && (
+                    <div className="p-2 rounded bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[10.5px]">
+                      <strong>Color-Only Variation:</strong> Identical geometry with shifted palette detected. High risk of rejection.
+                    </div>
+                  )}
+
+                  <ul className="text-[10.5px] text-neutral-400 list-disc list-inside space-y-0.5 pt-1">
+                    {similarityResult.topMatch.reasons.slice(0, 3).map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+
+                  <button
+                    onClick={() => setShowSimilarityModal(true)}
+                    className="w-full mt-2 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold text-xs border border-neutral-700 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <span>Inspect Side-by-Side Fingerprint</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="p-3 rounded-lg bg-neutral-950 border border-neutral-800 space-y-1.5 text-[11px]">
+                  <div className="font-bold text-neutral-200 text-xs flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Adobe Stock Differentiation Rules</span>
+                  </div>
+                  <p className="text-neutral-400 leading-relaxed">
+                    Ensure each asset introduces fresh objects, alternative camera angles, or specialized industry themes to comply with moderation guidelines.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 rounded-lg bg-neutral-950 border border-neutral-800 text-center space-y-2">
+                <ShieldCheck className="w-8 h-8 text-emerald-400 mx-auto" />
+                <div className="font-bold text-neutral-200 text-xs">Clean Vector Signature</div>
+                <div className="text-[11px] text-neutral-400 leading-relaxed">
+                  No overlapping subjects or matching bezier paths detected among existing catalog assets.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 6. THUMBNAIL TEST TAB */}
         {activeTab === 'thumbnails' && (
           <div className="space-y-3.5">
             <div>
@@ -581,6 +692,15 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* Similarity Inspection Modal */}
+      <SimilarityAuditModal
+        isOpen={showSimilarityModal}
+        onClose={() => setShowSimilarityModal(false)}
+        currentProject={project}
+        allProjects={allProjects}
+        auditResult={similarityResult}
+      />
     </aside>
   );
 };

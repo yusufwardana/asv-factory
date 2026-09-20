@@ -12,11 +12,14 @@ import {
   Square
 } from 'lucide-react';
 import { Project, PreflightResult, PreflightItem } from '../types';
+import { checkProjectSimilarity } from '../lib/similarityGuard';
+import { SimilarityAuditModal } from './SimilarityAuditModal';
 
 interface PreflightModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: Project;
+  allProjects?: Project[];
   preflight: PreflightResult;
   onUpdateProject: (updater: (prev: Project) => Project) => void;
   onOpenMetadata: () => void;
@@ -26,13 +29,17 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
   isOpen,
   onClose,
   project,
+  allProjects = [],
   preflight,
   onUpdateProject,
   onOpenMetadata,
 }) => {
   const [filter, setFilter] = useState<'all' | 'fail' | 'warning' | 'pass'>('all');
+  const [showSimilarityModal, setShowSimilarityModal] = useState(false);
 
   if (!isOpen) return null;
+
+  const similarityResult = checkProjectSimilarity(project, allProjects);
 
   const filteredItems = preflight.items.filter(item => {
     if (filter === 'fail') return item.status === 'fail';
@@ -92,6 +99,8 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
         });
         return { ...prev, slots: nextSlots, updatedAt: new Date().toISOString() };
       });
+    } else if (item.id === 'similarity-guard') {
+      setShowSimilarityModal(true);
     } else if (item.category === 'metadata') {
       onOpenMetadata();
     }
@@ -295,6 +304,14 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
           </div>
         </div>
       </div>
+
+      <SimilarityAuditModal
+        isOpen={showSimilarityModal}
+        onClose={() => setShowSimilarityModal(false)}
+        currentProject={project}
+        allProjects={allProjects}
+        auditResult={similarityResult}
+      />
     </div>
   );
 };
