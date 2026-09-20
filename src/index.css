@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* Wireframe Outline Inspection Mode */
+.outline-wireframe * {
+  fill: transparent !important;
+  stroke: #22d3ee !important;
+  stroke-width: 0.75px !important;
+  stroke-dasharray: none !important;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Custom compact scrollbar for dark UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}

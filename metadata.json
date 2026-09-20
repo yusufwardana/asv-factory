@@ -1,0 +1,6 @@
+{
+  "name": "Adobe Stock Vector Factory",
+  "description": "Professional vector production workspace for Adobe Stock contributors. Import, normalize, assemble icon sheets, preflight, inspect, optimize metadata, and export stock-ready SVGs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
