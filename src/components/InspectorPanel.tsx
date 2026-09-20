@@ -22,6 +22,7 @@ import { IconSlot, Project } from '../types';
 import { extractProjectPalette, PaletteItem } from '../lib/svgUtils';
 import { checkProjectSimilarity } from '../lib/similarityGuard';
 import { SimilarityAuditModal } from './SimilarityAuditModal';
+import { useI18n } from '../lib/i18n';
 
 interface InspectorPanelProps {
   project: Project;
@@ -40,6 +41,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   selectedSlotIndex,
   onSelectSlot,
 }) => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<InspectorTab>('vector');
   const [showSimilarityModal, setShowSimilarityModal] = useState(false);
   const [mergeConfirmation, setMergeConfirmation] = useState<{ sourceHex: string; targetHex: string } | null>(null);
@@ -143,7 +145,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           title="Vector Geometry Inspector"
         >
           <Activity className="w-3.5 h-3.5 text-amber-400" />
-          <span>Vector</span>
+          <span>{t('tab.vector')}</span>
         </button>
         <button
           onClick={() => setActiveTab('palette')}
@@ -154,7 +156,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           title="Project Palette Manager"
         >
           <Palette className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Palette</span>
+          <span>{t('tab.palette')}</span>
         </button>
         <button
           onClick={() => setActiveTab('strokes')}
@@ -165,7 +167,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           title="Stroke Width Audit"
         >
           <PenTool className="w-3.5 h-3.5 text-blue-400" />
-          <span>Strokes</span>
+          <span>{t('tab.strokes')}</span>
         </button>
         <button
           onClick={() => setActiveTab('complexity')}
@@ -176,7 +178,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           title="Trace Artifacts & Complexity"
         >
           <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-          <span>Quality</span>
+          <span>{t('tab.complexity')}</span>
         </button>
         <button
           onClick={() => setActiveTab('similarity')}
@@ -191,7 +193,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           ) : (
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
           )}
-          <span>Guard</span>
+          <span>{t('tab.similarity')}</span>
           {similarityResult.hasMatches && similarityResult.highestScore >= 60 && (
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 absolute top-1 right-1" />
           )}
@@ -205,7 +207,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
           title="Thumbnail Search Preview (512, 256, 128, 64px)"
         >
           <Maximize className="w-3.5 h-3.5 text-rose-400" />
-          <span>Thumb</span>
+          <span>{t('tab.thumbnails')}</span>
         </button>
       </div>
 

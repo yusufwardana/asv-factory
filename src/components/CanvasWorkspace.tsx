@@ -20,6 +20,7 @@ import { IconSlot, Project } from '../types';
 import { ViewMode } from './Header';
 import { createEmptyStats } from '../lib/svgUtils';
 import { sanitizeAndInspectSvg, autoNormalizeSlots, extractInnerSvgContent } from '../lib/svgUtils';
+import { useI18n } from '../lib/i18n';
 
 interface CanvasWorkspaceProps {
   project: Project;
@@ -40,6 +41,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
   showGrid,
   showSafeAreas,
 }) => {
+  const { t } = useI18n();
   const [zoom, setZoom] = useState<number>(0.18); // default view scale for 4000x4000
   const [patternRepeat, setPatternRepeat] = useState<1 | 2 | 4>(2);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -268,7 +270,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
             title="Analyze all 16 slots and balance optical visual mass consistently without shape distortion (PRD Section 10)"
           >
             <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>AUTO NORMALIZE</span>
+            <span>{t('canvas.autoNormalize')}</span>
           </button>
 
           {/* Batch Import Button */}
@@ -279,7 +281,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
             title="Batch Import up to 16 SVGs (Auto maps by 01, 02.. in filename)"
           >
             <Upload className="w-3.5 h-3.5 text-blue-400" />
-            <span>Batch Import SVGs</span>
+            <span>{t('canvas.batchImport')}</span>
           </button>
 
           {/* Center All */}
@@ -289,7 +291,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
             title="Reset position and scale for all slots"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Positions</span>
+            <span>{t('canvas.resetPositions')}</span>
           </button>
 
           {project.assetType === 'pattern' && (
@@ -469,7 +471,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                     ) : (
                       <div className="flex flex-col items-center justify-center text-neutral-600 gap-1 p-2 text-center">
                         <Upload className="w-4 h-4 opacity-40" />
-                        <span className="text-[10px]">Drop SVG</span>
+                        <span className="text-[10px]">{t('canvas.uploadSvg')}</span>
                       </div>
                     )}
                   </div>

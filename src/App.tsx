@@ -30,8 +30,9 @@ import { ProjectsView } from './components/ProjectsView';
 import { PreflightModal } from './components/PreflightModal';
 import { MetadataStudioModal } from './components/MetadataStudioModal';
 import { ExportModal } from './components/ExportModal';
+import { I18nProvider } from './lib/i18n';
 
-export default function App() {
+function AppContent() {
   // Application Data States
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string>('');
@@ -514,5 +515,13 @@ export default function App() {
         onUpdateProject={handleUpdateCurrentProject}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
   );
 }

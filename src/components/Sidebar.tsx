@@ -10,6 +10,7 @@ import {
   DatabaseBackup,
   Sparkles
 } from 'lucide-react';
+import { useI18n } from '../lib/i18n';
 
 export type ActiveTab = 
   | 'workspace'
@@ -34,59 +35,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
   pendingRejectionsCount = 3,
   readyProjectsCount = 1
 }) => {
+  const { t } = useI18n();
+
   const navItems = [
     {
       id: 'workspace' as ActiveTab,
-      label: 'Workspace',
+      label: t('nav.workspace'),
       icon: LayoutGrid,
-      desc: 'Canvas & Inspector'
+      desc: t('nav.workspaceDesc')
     },
     {
       id: 'dashboard' as ActiveTab,
-      label: 'Dashboard',
+      label: t('nav.dashboard'),
       icon: BarChart3,
-      desc: 'Daily Tracker & Goals'
+      desc: t('nav.dashboardDesc')
     },
     {
       id: 'projects' as ActiveTab,
-      label: 'Projects',
+      label: t('nav.projects'),
       icon: Folders,
-      desc: 'All Stock Assets'
+      desc: t('nav.projectsDesc')
     },
     {
       id: 'kanban' as ActiveTab,
-      label: 'Production Queue',
+      label: t('nav.kanban'),
       icon: Kanban,
       badge: readyProjectsCount > 0 ? readyProjectsCount : undefined,
       badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
-      desc: '11-Stage Pipeline'
+      desc: t('nav.kanbanDesc')
     },
     {
       id: 'templates' as ActiveTab,
-      label: 'Preset Templates',
+      label: t('nav.templates'),
       icon: FileBox,
-      desc: 'Artboards & Grids'
+      desc: t('nav.templatesDesc')
     },
     {
       id: 'rejections' as ActiveTab,
-      label: 'Rejection Tracker',
+      label: t('nav.rejections'),
       icon: ShieldAlert,
       badge: pendingRejectionsCount > 0 ? pendingRejectionsCount : undefined,
       badgeColor: 'bg-rose-500/20 text-rose-400 border-rose-500/40',
-      desc: 'Moderation Feedback'
+      desc: t('nav.rejectionsDesc')
     },
     {
       id: 'focus-mode' as ActiveTab,
-      label: 'Production Day',
+      label: t('nav.focusMode'),
       icon: Flame,
       highlight: true,
-      desc: 'Targeted Focus Mode'
+      desc: t('nav.focusModeDesc')
     },
     {
       id: 'backup' as ActiveTab,
-      label: 'Backup & Storage',
+      label: t('nav.backup'),
       icon: DatabaseBackup,
-      desc: 'IndexedDB & JSON'
+      desc: t('nav.backupDesc')
     }
   ];
 
@@ -95,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Navigation Links */}
       <div className="p-3 space-y-1">
         <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-          Production Workspace
+          {t('sidebar.title')}
         </div>
 
         {navItems.map(item => {
@@ -139,10 +142,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-2 rounded bg-neutral-900/90 border border-neutral-800 text-[11px] text-neutral-400">
           <div className="flex items-center gap-1.5 font-semibold text-neutral-200 text-xs mb-1">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Core Principle</span>
+            <span>{t('sidebar.corePrincipleTitle')}</span>
           </div>
           <p className="italic text-neutral-400 text-[10.5px]">
-            &quot;Produce faster, not sloppier. Human review remains the ultimate quality gate.&quot;
+            {t('sidebar.corePrincipleQuote')}
           </p>
         </div>
       </div>

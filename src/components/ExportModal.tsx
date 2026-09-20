@@ -33,6 +33,7 @@ import {
   SimilarityAuditResult 
 } from '../lib/similarityGuard';
 import { SimilarityAuditModal } from './SimilarityAuditModal';
+import { useI18n } from '../lib/i18n';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -51,6 +52,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   preflight,
   onUpdateProject,
 }) => {
+  const { t } = useI18n();
   const [isExporting, setIsExporting] = useState(false);
   const [exportedSuccess, setExportedSuccess] = useState(false);
   const [showDetailedAudit, setShowDetailedAudit] = useState(false);
@@ -231,10 +233,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               </div>
               <div>
                 <h2 className="font-bold text-sm text-neutral-100 uppercase tracking-wide">
-                  Export Stock Vector Package
+                  {t('export.modalTitle')}
                 </h2>
                 <p className="text-xs text-neutral-400">
-                  Pre-export technical validation, export integrity screening &amp; catalog similarity gate.
+                  {t('export.readyDesc')}
                 </p>
               </div>
             </div>
@@ -500,7 +502,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               onClick={onClose}
               className="px-3 py-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
             >
-              Close
+              {t('export.close')}
             </button>
 
             <button
@@ -513,7 +515,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <span>
                 {isExporting 
                   ? 'Generating ZIP...' 
-                  : (hasLiveText ? 'Resolve Live Text to Export' : (isHighRisk && !overrideAcknowledged ? 'Confirmation Required to Export' : 'Download Complete Package (.ZIP)'))}
+                  : (hasLiveText ? 'Resolve Live Text to Export' : (isHighRisk && !overrideAcknowledged ? 'Confirmation Required to Export' : t('export.downloadZip')))}
               </span>
             </button>
           </div>

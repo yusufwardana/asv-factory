@@ -19,6 +19,7 @@ import { checkProjectSimilarity } from '../lib/similarityGuard';
 import { SimilarityAuditModal } from './SimilarityAuditModal';
 import { removeLiveTextFromSvg } from '../lib/svgUtils';
 import { ADOBE_STOCK_RULES } from '../lib/adobeStockRules';
+import { useI18n } from '../lib/i18n';
 
 interface PreflightModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
   onUpdateProject,
   onOpenMetadata,
 }) => {
+  const { t } = useI18n();
   const [filter, setFilter] = useState<'all' | 'fail' | 'warning' | 'pass'>('all');
   const [showSimilarityModal, setShowSimilarityModal] = useState(false);
 
@@ -168,7 +170,7 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-sm text-neutral-100 uppercase tracking-wide">
-                  Adobe Stock Preflight Engine
+                  {t('preflight.modalTitle')}
                 </h2>
                 <span className={`px-2 py-0.5 rounded text-[10.5px] font-bold tracking-wide uppercase ${
                   preflight.statusVerdict === 'READY FOR HUMAN REVIEW' 
@@ -197,26 +199,26 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
           <div className="flex items-center gap-3 text-neutral-300">
             <span className="flex items-center gap-1">
               <FileCode className="w-3.5 h-3.5 text-amber-400" />
-              Paths: <strong className="text-amber-400">{totalPaths}</strong>
+              {t('inspector.paths')}: <strong className="text-amber-400">{totalPaths}</strong>
             </span>
             <span>
-              Rects: <strong className="text-cyan-400">{totalRects}</strong>
+              {t('inspector.shapes')}: <strong className="text-cyan-400">{totalRects}</strong>
             </span>
             <span>
-              Circles: <strong className="text-emerald-400">{totalCircles}</strong>
+              {t('inspector.circlesLines')}: <strong className="text-emerald-400">{totalCircles}</strong>
             </span>
             <span>
               Polygons/Lines: <strong className="text-purple-400">{totalPolygons + totalLines + totalPolylines}</strong>
             </span>
             <span className="text-neutral-400 border-l border-neutral-800 pl-3">
-              Total Drawables: <strong className="text-neutral-100">{totalDrawable}</strong>
+              {t('inspector.totalDrawables')}: <strong className="text-neutral-100">{totalDrawable}</strong>
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1 text-blue-400">
               <Layers className="w-3.5 h-3.5" />
-              Transparency: {totalTransparency}
+              {t('inspector.transparency')} {totalTransparency}
             </span>
             <span className="text-neutral-400">
               {project.slots.filter(s => s.svgContent).length} slots
@@ -234,7 +236,7 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
                 filter === 'all' ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
-              All ({preflight.items.length})
+              {t('preflight.allFilter')} ({preflight.items.length})
             </button>
             <button
               onClick={() => setFilter('fail')}
@@ -243,7 +245,7 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
               }`}
             >
               <XCircle className="w-3 h-3 text-rose-400" />
-              <span>Fails ({preflight.failCount})</span>
+              <span>{t('preflight.failFilter')} ({preflight.failCount})</span>
             </button>
             <button
               onClick={() => setFilter('warning')}
@@ -252,7 +254,7 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
               }`}
             >
               <AlertTriangle className="w-3 h-3 text-amber-400" />
-              <span>Warnings ({preflight.warningCount})</span>
+              <span>{t('preflight.warnFilter')} ({preflight.warningCount})</span>
             </button>
             <button
               onClick={() => setFilter('pass')}
@@ -261,7 +263,7 @@ export const PreflightModal: React.FC<PreflightModalProps> = ({
               }`}
             >
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-              <span>Passed ({preflight.passCount})</span>
+              <span>{t('preflight.passFilter')} ({preflight.passCount})</span>
             </button>
           </div>
 

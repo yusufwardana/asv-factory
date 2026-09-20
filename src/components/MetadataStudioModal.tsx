@@ -13,6 +13,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { Project, AssetMetadata } from '../types';
+import { useI18n } from '../lib/i18n';
 
 interface MetadataStudioModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export const MetadataStudioModal: React.FC<MetadataStudioModalProps> = ({
   project,
   onUpdateProject,
 }) => {
+  const { t } = useI18n();
   const [newKeyword, setNewKeyword] = useState('');
   const [batchKeywords, setBatchKeywords] = useState('');
   const [showBatchInput, setShowBatchInput] = useState(false);
@@ -187,10 +189,10 @@ export const MetadataStudioModal: React.FC<MetadataStudioModalProps> = ({
             </div>
             <div>
               <h2 className="font-bold text-sm text-neutral-100 uppercase tracking-wide">
-                Adobe Stock Metadata Studio
+                {t('metadata.modalTitle')}
               </h2>
               <p className="text-xs text-neutral-400">
-                Craft commercial titles &amp; order 50 keywords with prioritized ranking signals.
+                {t('metadata.titleHint')}
               </p>
             </div>
           </div>
@@ -201,7 +203,7 @@ export const MetadataStudioModal: React.FC<MetadataStudioModalProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold transition-colors"
             >
               <Wand2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>Structured Generator</span>
+              <span>{t('metadata.generateAi')}</span>
             </button>
             <button
               onClick={onClose}
@@ -521,7 +523,7 @@ export const MetadataStudioModal: React.FC<MetadataStudioModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold transition-colors shadow-md"
           >
-            Save &amp; Close Studio
+            {t('metadata.save')}
           </button>
         </div>
       </div>
