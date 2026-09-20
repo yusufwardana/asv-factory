@@ -8,7 +8,8 @@ import {
   ShieldAlert, 
   Flame, 
   DatabaseBackup,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 
@@ -20,7 +21,8 @@ export type ActiveTab =
   | 'templates'
   | 'rejections'
   | 'focus-mode'
-  | 'backup';
+  | 'backup'
+  | 'guide';
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -90,6 +92,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: t('nav.backup'),
       icon: DatabaseBackup,
       desc: t('nav.backupDesc')
+    },
+    {
+      id: 'guide' as ActiveTab,
+      label: t('nav.guide'),
+      icon: HelpCircle,
+      desc: t('nav.guideDesc')
     }
   ];
 

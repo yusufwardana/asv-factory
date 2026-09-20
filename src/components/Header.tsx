@@ -14,7 +14,8 @@ import {
   FolderPlus,
   Layers,
   FileCheck,
-  Languages
+  Languages,
+  HelpCircle
 } from 'lucide-react';
 import { Project, PreflightResult } from '../types';
 import { useI18n } from '../lib/i18n';
@@ -35,6 +36,7 @@ interface HeaderProps {
   onOpenPreflight: () => void;
   onOpenMetadata: () => void;
   onOpenExport: () => void;
+  onOpenHelp?: () => void;
   onOpenNewProject?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
@@ -56,6 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPreflight,
   onOpenMetadata,
   onOpenExport,
+  onOpenHelp,
   onOpenNewProject,
   canUndo = false,
   canRedo = false,
@@ -325,6 +328,19 @@ export const Header: React.FC<HeaderProps> = ({
             {project.metadata.keywords.length}/50
           </span>
         </button>
+
+        {/* User Manual & Help Guide Trigger */}
+        {onOpenHelp && (
+          <button
+            onClick={onOpenHelp}
+            id="btn-open-help-header"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 text-xs font-medium border border-neutral-700 transition-colors"
+            title={t('header.helpTooltip')}
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">{t('header.help')}</span>
+          </button>
+        )}
 
         {/* Clean Stock SVG Export */}
         <button

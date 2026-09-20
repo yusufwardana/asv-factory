@@ -30,6 +30,7 @@ import { ProjectsView } from './components/ProjectsView';
 import { PreflightModal } from './components/PreflightModal';
 import { MetadataStudioModal } from './components/MetadataStudioModal';
 import { ExportModal } from './components/ExportModal';
+import { HelpGuideModal } from './components/HelpGuideModal';
 import { I18nProvider } from './lib/i18n';
 
 function AppContent() {
@@ -62,6 +63,7 @@ function AppContent() {
   const [isPreflightOpen, setIsPreflightOpen] = useState(false);
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Initialize data from Local-First Storage (IndexedDB / LocalStorage)
   useEffect(() => {
@@ -275,6 +277,9 @@ function AppContent() {
       } else if (e.key === 'e' || e.key === 'E') {
         e.preventDefault();
         setIsExportOpen(true);
+      } else if (e.key === '?' || e.key === 'F1') {
+        e.preventDefault();
+        setIsHelpOpen(true);
       } else if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
         // Trigger auto normalize
@@ -312,6 +317,7 @@ function AppContent() {
         onOpenPreflight={() => setIsPreflightOpen(true)}
         onOpenMetadata={() => setIsMetadataOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
+        onOpenHelp={() => setIsHelpOpen(true)}
         onOpenNewProject={() => setActiveTab('projects')}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -481,6 +487,16 @@ function AppContent() {
             }}
           />
         )}
+
+        {activeTab === 'guide' && (
+          <div className="flex-1 p-4 overflow-hidden bg-neutral-950">
+            <HelpGuideModal
+              isOpen={true}
+              isEmbeddedView={true}
+              onClose={() => setActiveTab('workspace')}
+            />
+          </div>
+        )}
       </div>
 
       {/* Preflight Validation Modal */}
@@ -513,6 +529,12 @@ function AppContent() {
         allProjects={projects}
         preflight={currentPreflight}
         onUpdateProject={handleUpdateCurrentProject}
+      />
+
+      {/* User Manual & Help Guide Modal */}
+      <HelpGuideModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
       />
     </div>
   );
