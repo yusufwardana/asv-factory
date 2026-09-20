@@ -248,28 +248,28 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
 
                 {/* Metrics Breakdown Grid */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
-                    <div className="text-neutral-400 text-[10px]">Path Count</div>
-                    <div className="text-base font-mono font-bold text-neutral-100">
+                  <div className="bg-neutral-950 p-2 rounded border border-neutral-800">
+                    <div className="text-neutral-400 text-[10px]">Paths &lt;path&gt;</div>
+                    <div className="text-base font-mono font-bold text-amber-400">
                       {selectedSlot.stats.pathCount}
                     </div>
                   </div>
-                  <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
-                    <div className="text-neutral-400 text-[10px]">Node Estimate</div>
-                    <div className="text-base font-mono font-bold text-neutral-100">
-                      ~{selectedSlot.stats.nodeEstimate}
+                  <div className="bg-neutral-950 p-2 rounded border border-neutral-800">
+                    <div className="text-neutral-400 text-[10px]">Shapes (Rect/Poly)</div>
+                    <div className="text-base font-mono font-bold text-cyan-400">
+                      {(selectedSlot.stats.elementCounts?.rects || 0) + (selectedSlot.stats.elementCounts?.polygons || 0)}
                     </div>
                   </div>
-                  <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
-                    <div className="text-neutral-400 text-[10px]">Total Elements</div>
-                    <div className="text-base font-mono font-bold text-neutral-100">
-                      {selectedSlot.stats.elementCount}
+                  <div className="bg-neutral-950 p-2 rounded border border-neutral-800">
+                    <div className="text-neutral-400 text-[10px]">Circles / Lines</div>
+                    <div className="text-base font-mono font-bold text-emerald-400">
+                      {(selectedSlot.stats.elementCounts?.circles || 0) + (selectedSlot.stats.elementCounts?.lines || 0) + (selectedSlot.stats.elementCounts?.polylines || 0)}
                     </div>
                   </div>
-                  <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
-                    <div className="text-neutral-400 text-[10px]">Groups &amp; Layers</div>
+                  <div className="bg-neutral-950 p-2 rounded border border-neutral-800">
+                    <div className="text-neutral-400 text-[10px]">Total Drawables</div>
                     <div className="text-base font-mono font-bold text-neutral-100">
-                      {selectedSlot.stats.groupCount}
+                      {selectedSlot.stats.elementCounts?.totalDrawableElements || selectedSlot.stats.elementCount}
                     </div>
                   </div>
                 </div>
@@ -284,25 +284,29 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                   <div className="space-y-1.5 font-mono text-[11px]">
                     <div className="flex justify-between items-center py-0.5 border-b border-neutral-800/60">
                       <span className="text-neutral-400">Embedded Raster:</span>
-                      <span className={selectedSlot.stats.hasRaster ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
-                        {selectedSlot.stats.hasRaster ? 'DETECTED (REJECT)' : '0 (CLEAN)'}
+                      <span className={selectedSlot.stats.hasRaster || (selectedSlot.stats.rasterDetails?.total || 0) > 0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                        {selectedSlot.stats.hasRaster || (selectedSlot.stats.rasterDetails?.total || 0) > 0 ? 'DETECTED (FAIL)' : '0 (CLEAN)'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-0.5 border-b border-neutral-800/60">
                       <span className="text-neutral-400">Live Typography:</span>
-                      <span className={selectedSlot.stats.hasText ? 'text-amber-400 font-bold' : 'text-emerald-400'}>
-                        {selectedSlot.stats.hasText ? 'LIVE TEXT (OUTLINE REQ)' : '0 (ALL OUTLINED)'}
+                      <span className={selectedSlot.stats.hasText || (selectedSlot.stats.textDetails?.count || 0) > 0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                        {selectedSlot.stats.hasText || (selectedSlot.stats.textDetails?.count || 0) > 0 
+                          ? `${selectedSlot.stats.textDetails?.count || 1} LIVE (<text>)` 
+                          : '0 (ALL OUTLINED)'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5 border-b border-neutral-800/60">
+                      <span className="text-neutral-400">Transparency:</span>
+                      <span className={(selectedSlot.stats.transparencyDetails?.opacityCount || 0) + (selectedSlot.stats.transparencyDetails?.fillOpacityCount || 0) > 0 ? 'text-blue-400' : 'text-emerald-400'}>
+                        {(selectedSlot.stats.transparencyDetails?.opacityCount || 0) + (selectedSlot.stats.transparencyDetails?.fillOpacityCount || 0) > 0
+                          ? `Fill-Op: ${selectedSlot.stats.transparencyDetails?.fillOpacityCount || 0}, Op: ${selectedSlot.stats.transparencyDetails?.opacityCount || 0}`
+                          : '0 (100% OPAQUE)'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-0.5 border-b border-neutral-800/60">
                       <span className="text-neutral-400">Executable Scripts:</span>
                       <span className="text-emerald-400">0 (REJECTED/CLEANED)</span>
-                    </div>
-                    <div className="flex justify-between items-center py-0.5 border-b border-neutral-800/60">
-                      <span className="text-neutral-400">Gradients / Filters:</span>
-                      <span className="text-neutral-300">
-                        {selectedSlot.stats.hasGradients ? 'Vector Linear/Radial' : 'Solid Vector'}
-                      </span>
                     </div>
                     <div className="flex justify-between items-center py-0.5">
                       <span className="text-neutral-400">Trace Artifacts:</span>

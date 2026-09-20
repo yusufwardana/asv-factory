@@ -11,7 +11,7 @@ import {
   createDefaultProject 
 } from './lib/storage';
 import { runFullPreflight } from './lib/preflightEngine';
-import { autoNormalizeSlots } from './lib/svgUtils';
+import { autoNormalizeSlots, createEmptyStats } from './lib/svgUtils';
 
 // Components
 import { Header, ViewMode } from './components/Header';
@@ -99,6 +99,7 @@ export default function App() {
     if (!currentProject) {
       return {
         overall: 'WARNING' as const,
+        statusVerdict: 'NOT READY' as const,
         passCount: 0,
         warningCount: 0,
         failCount: 0,
@@ -165,22 +166,7 @@ export default function App() {
       offsetY: 0,
       rotation: 0,
       visualWeight: 1.0,
-      stats: {
-        elementCount: 0,
-        pathCount: 0,
-        nodeEstimate: 0,
-        groupCount: 0,
-        colors: [],
-        strokeWidths: [],
-        hasRaster: false,
-        hasText: false,
-        hasScripts: false,
-        hasGradients: false,
-        hasMasks: false,
-        hasClipPaths: false,
-        hasExternalRefs: false,
-        artifactsCount: 0
-      },
+      stats: createEmptyStats(),
       sanitizationLog: []
     }));
 

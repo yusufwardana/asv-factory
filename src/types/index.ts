@@ -42,9 +42,83 @@ export interface CanvasConfig {
   backgroundColor?: string;
 }
 
+export interface DetailedElementCounts {
+  paths: number;
+  rects: number;
+  circles: number;
+  ellipses: number;
+  lines: number;
+  polylines: number;
+  polygons: number;
+  groups: number;
+  text: number;
+  images: number;
+  uses: number;
+  defs: number;
+  linearGradients: number;
+  radialGradients: number;
+  patterns: number;
+  filters: number;
+  masks: number;
+  clipPaths: number;
+  totalDrawableElements: number;
+}
+
+export interface LiveTextDetail {
+  text: string;
+  tagName: string;
+  slotIndex?: number;
+  slotLabel?: string;
+  isHidden: boolean;
+}
+
+export interface TransparencyDetail {
+  totalElements: number;
+  opacityCount: number;
+  fillOpacityCount: number;
+  strokeOpacityCount: number;
+  inheritedCount: number;
+  hasTransparency: boolean;
+  items: Array<{
+    tagName: string;
+    type: 'opacity' | 'fill-opacity' | 'stroke-opacity' | 'inherited';
+    value: string;
+  }>;
+}
+
+export interface RasterDetail {
+  total: number;
+  embeddedBase64: number;
+  externalUrls: number;
+  items: Array<{
+    type: 'embedded-base64' | 'external-url' | 'other';
+    src: string;
+  }>;
+}
+
+export interface EffectsDetail {
+  gradientDefs: number;
+  gradientUsages: number;
+  patternDefs: number;
+  patternUsages: number;
+  filterDefs: number;
+  filterUsages: number;
+  maskDefs: number;
+  maskUsages: number;
+  clipPathDefs: number;
+  clipPathUsages: number;
+}
+
+export interface StrokeDetail {
+  widths: number[];
+  colors: string[];
+  lineCaps: string[];
+  lineJoins: string[];
+}
+
 export interface VectorStats {
-  elementCount: number;
-  pathCount: number;
+  elementCount: number; // total drawable elements
+  pathCount: number;    // ONLY <path> elements
   nodeEstimate: number;
   groupCount: number;
   colors: string[];
@@ -57,6 +131,17 @@ export interface VectorStats {
   hasClipPaths: boolean;
   hasExternalRefs: boolean;
   artifactsCount: number;
+  // Detailed audit breakdown
+  elementCounts: DetailedElementCounts;
+  textDetails: {
+    count: number;
+    items: LiveTextDetail[];
+  };
+  transparencyDetails: TransparencyDetail;
+  rasterDetails: RasterDetail;
+  effectsDetails: EffectsDetail;
+  strokeDetails: StrokeDetail;
+  outsideArtboardCount: number;
 }
 
 export interface IconSlot {
@@ -144,6 +229,11 @@ export interface PreflightResult {
   failCount: number;
   items: PreflightItem[];
   readyForReview: boolean;
+  statusVerdict: 'NOT READY' | 'NEEDS REVIEW' | 'READY FOR HUMAN REVIEW';
+  exportVerified?: boolean;
+  exportVerificationErrors?: string[];
+  svgSha256?: string;
+  elementCountsTotal?: DetailedElementCounts;
 }
 
 export type RejectionReason = 

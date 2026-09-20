@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { IconSlot, Project } from '../types';
 import { ViewMode } from './Header';
+import { createEmptyStats } from '../lib/svgUtils';
 import { sanitizeAndInspectSvg, autoNormalizeSlots, extractInnerSvgContent } from '../lib/svgUtils';
 
 interface CanvasWorkspaceProps {
@@ -163,22 +164,7 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
         scale: 1.0,
         offsetX: 0,
         offsetY: 0,
-        stats: {
-          elementCount: 0,
-          pathCount: 0,
-          nodeEstimate: 0,
-          groupCount: 0,
-          colors: [],
-          strokeWidths: [],
-          hasRaster: false,
-          hasText: false,
-          hasScripts: false,
-          hasGradients: false,
-          hasMasks: false,
-          hasClipPaths: false,
-          hasExternalRefs: false,
-          artifactsCount: 0
-        },
+        stats: createEmptyStats(),
         sanitizationLog: ['Slot emptied.']
       };
       return { ...prev, slots: nextSlots, updatedAt: new Date().toISOString() };

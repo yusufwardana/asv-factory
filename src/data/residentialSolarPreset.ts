@@ -89,7 +89,8 @@ export const RESIDENTIAL_SOLAR_PRESET: PresetIconData[] = [
   <circle cx="50" cy="48" r="24" stroke="#2E7CC1" stroke-dasharray="3 3" />
   <!-- Digital readout -->
   <rect x="34" y="38" width="32" height="14" rx="2" fill="#2E7CC1" fill-opacity="0.2" stroke="#2E7CC1" />
-  <text x="50" y="49" font-family="monospace" font-size="8" fill="#4CA741" text-anchor="middle" font-weight="bold">82.4</text>
+  <!-- Digital readout outlines (82.4) -->
+  <path d="M40 43h3v2h-3zm0 3h3v2h-3z M46 43h3v2.5h-3v2.5h3 M51 48.5h1.5v1.5h-1.5z M55 43v3h3v-3zm3 3v2.5" stroke="#4CA741" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
   <!-- Rotating dial pointer -->
   <line x1="50" y1="48" x2="62" y2="38" stroke="#FEC912" stroke-width="3" />
   <circle cx="50" cy="48" r="3" fill="#062649" />

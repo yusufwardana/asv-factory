@@ -63,14 +63,27 @@ export async function getStoredProjects(): Promise<Project[]> {
       req.onsuccess = () => {
         const results = req.result as Project[];
         if (results && results.length > 0) {
-          resolve(results);
+          // Ensure Residential Solar Energy preserves aiStatus: 'yes' (Bug D fix)
+          const hydrated = results.map(p => {
+            if (p.id === 'proj-solar-001' && p.aiStatus !== 'yes') {
+              p.aiStatus = 'yes';
+            }
+            return p;
+          });
+          resolve(hydrated);
         } else {
           // Check localStorage or create default starter project
           const lsData = localStorage.getItem(LS_PROJECTS_KEY);
           if (lsData) {
             try {
-              const parsed = JSON.parse(lsData);
-              resolve(parsed);
+              const parsed = JSON.parse(lsData) as Project[];
+              const hydrated = parsed.map(p => {
+                if (p.id === 'proj-solar-001' && p.aiStatus !== 'yes') {
+                  p.aiStatus = 'yes';
+                }
+                return p;
+              });
+              resolve(hydrated);
               return;
             } catch {}
           }
@@ -355,7 +368,7 @@ export function createDefaultProject(): Project {
     topic: 'Residential Solar & Battery Systems',
     style: 'Modern Line Vector with Dual-tone Fill Accents',
     palette: ['#062649', '#2E7CC1', '#4CA741', '#FEC912'],
-    aiStatus: 'no',
+    aiStatus: 'yes',
     aiChecklist: {
       commercialTermsReviewed: true,
       artworkVisuallyReviewed: true,
