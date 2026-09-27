@@ -18,7 +18,8 @@ import {
   ExternalLink,
   ChevronRight,
   Maximize,
-  PenTool
+  PenTool,
+  Crop
 } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 
@@ -30,6 +31,7 @@ interface HelpGuideModalProps {
 
 type GuideSection = 
   | 'workflow'
+  | 'sheet-splitter'
   | 'adobe-rules'
   | 'features'
   | 'metadata'
@@ -66,6 +68,12 @@ export const HelpGuideModal: React.FC<HelpGuideModalProps> = ({
       icon: Wand2,
       label: isId ? 'Alur Kerja Produksi' : 'Production Workflow',
       badge: isId ? '5 Langkah' : '5 Steps'
+    },
+    {
+      id: 'sheet-splitter' as GuideSection,
+      icon: Crop,
+      label: isId ? 'AI Sheet Splitter' : 'AI Sheet Splitter',
+      badge: 'Gemini Crop'
     },
     {
       id: 'adobe-rules' as GuideSection,
@@ -324,6 +332,63 @@ export const HelpGuideModal: React.FC<HelpGuideModalProps> = ({
                       ? 'Tekan tombol oranye "EKSPOR SVG STOCK" (Ctrl+E). Anda mendapatkan file SVG bersih dengan 16 grup terisolasi, sertifikat integritas SHA-256, dan laporan kepatuhan teknis.'
                       : 'Click "EXPORT STOCK SVG" (Ctrl+E). Download a standalone SVG with 16 semantic groups, SHA-256 integrity hash verification, and QC audit report.'}
                   </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION: AI SHEET SPLITTER */}
+          {activeSection === 'sheet-splitter' && (
+            <div className="space-y-6 max-w-4xl">
+              <div>
+                <h3 className="text-lg font-bold text-neutral-100 flex items-center gap-2">
+                  <Crop className="w-5 h-5 text-amber-400" />
+                  <span>{isId ? 'AI Icon Sheet Splitter (Utilitas Pemotong Gemini)' : 'AI Icon Sheet Splitter (Gemini Crop Utility)'}</span>
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  {isId 
+                    ? 'Alat khusus untuk memecah 1 lembar gambar multi-ikon yang di-generate dengan Gemini menjadi file raster PNG individual siap diimpor ke Inkscape untuk di-vektorisasi.' 
+                    : 'A dedicated utility to split a multi-icon image sheet generated with Gemini into individual, cleanly cropped raster PNG files ready for manual vectorization in Inkscape.'}
+                </p>
+              </div>
+
+              {/* Workflow notice */}
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 space-y-2">
+                <div className="font-bold flex items-center gap-2 text-amber-200">
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  <span>{isId ? 'Perhatian: File Raster Bukan Aset Akhir Adobe Stock' : 'Notice: Raster Files Are NOT Final Adobe Stock Assets'}</span>
+                </div>
+                <p className="leading-relaxed">
+                  {isId
+                    ? 'Modul ini TIDAK melakukan konversi otomatis atau vektorisasi raster-ke-SVG. Tujuannya adalah mengeliminasi proses crop manual yang memakan waktu sehingga Anda dapat langsung fokus melakukan tracing & penyempurnaan kurva vektor di Inkscape.'
+                    : 'This module does NOT perform automated vectorization or raster-to-SVG tracing. Its purpose is to eliminate manual crop tedium so you can jump directly into curve refinement and vectorization in Inkscape.'}
+                </p>
+              </div>
+
+              {/* 5 Steps of Splitter workflow */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+                  {isId ? 'Langkah Penggunaan Praktis' : 'Step-by-Step Usage'}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-3 bg-neutral-950/60 rounded-lg border border-neutral-800">
+                    <span className="text-xs font-mono font-bold text-amber-400">1. Unggah / Tarik File</span>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      {isId ? 'Unggah gambar lembar Gemini (PNG, JPEG, WEBP). Preview dan dimensi resolusi asli akan ditampilkan.' : 'Upload your Gemini sheet (PNG, JPEG, WEBP). Native dimensions and preview are displayed.'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-neutral-950/60 rounded-lg border border-neutral-800">
+                    <span className="text-xs font-mono font-bold text-amber-400">2. Sesuaikan Kisi & Margin</span>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      {isId ? 'Gunakan preset 4×4 atau Auto Detect. Atur margin luar dan jarak antar sel secara visual.' : 'Use 4×4 preset or Auto Detect. Adjust outer margins and cell gaps with immediate overlay feedback.'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-neutral-950/60 rounded-lg border border-neutral-800">
+                    <span className="text-xs font-mono font-bold text-amber-400">3. Download ZIP & Inkscape</span>
+                    <p className="text-xs text-neutral-400 mt-1">
+                      {isId ? 'Klik Split lalu Download All (ZIP). Buka file PNG di Inkscape untuk di-vektorisasi, lalu upload hasil SVG ke Vector Factory!' : 'Click Split and Download All (ZIP). Open PNGs in Inkscape to vectorize, then return SVG files to Vector Factory!'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

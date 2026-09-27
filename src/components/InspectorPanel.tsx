@@ -506,51 +506,146 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
         {activeTab === 'complexity' && (
           <div className="space-y-3.5">
             <div>
-              <div className="font-semibold text-neutral-100 text-xs">Vector Complexity &amp; Artifacts</div>
+              <div className="font-semibold text-neutral-100 text-xs flex items-center justify-between">
+                <span>Vector Path &amp; Node Complexity</span>
+                <span className="text-[10px] text-amber-400 font-mono">Autotrace Quality</span>
+              </div>
               <div className="text-[11px] text-neutral-400">
-                Detects messy auto-trace output, microscopic stray shapes, and complexity spikes.
+                Audits anchor points and detects messy autotrace jitter that triggers Adobe Stock technical rejections.
               </div>
             </div>
 
-            <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800 flex items-center justify-between">
+            {/* Selected Slot Deep-Dive Inspection */}
+            {selectedSlot && (
+              <div className="p-3 rounded-lg bg-neutral-900 border border-neutral-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-bold text-neutral-200 truncate max-w-[170px]">
+                    {selectedSlot.label}
+                  </div>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                    selectedSlot.stats.nodeEstimate > 550
+                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                      : (selectedSlot.stats.nodeEstimate > 250
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30')
+                  }`}>
+                    {selectedSlot.stats.nodeEstimate > 550 ? 'High Risk' : (selectedSlot.stats.nodeEstimate > 250 ? 'Moderate' : 'Optimal')}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <div className="p-2 rounded bg-neutral-950 border border-neutral-800/80">
+                    <div className="text-[10px] text-neutral-400">Estimated Nodes</div>
+                    <div className="text-base font-mono font-bold text-neutral-100">
+                      ~{selectedSlot.stats.nodeEstimate}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded bg-neutral-950 border border-neutral-800/80">
+                    <div className="text-[10px] text-neutral-400">Path Elements</div>
+                    <div className="text-base font-mono font-bold text-neutral-100">
+                      {selectedSlot.stats.pathCount}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Visual Density Meter Bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-neutral-400 font-mono">
+                    <span>Clean (&lt;250)</span>
+                    <span>Moderate</span>
+                    <span>Bloat (&gt;550)</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-neutral-950 overflow-hidden flex border border-neutral-800">
+                    <div 
+                      className="bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${Math.min(100, (Math.min(250, selectedSlot.stats.nodeEstimate) / 700) * 100)}%` }}
+                    />
+                    <div 
+                      className="bg-amber-400 transition-all duration-300"
+                      style={{ 
+                        width: `${Math.min(100, (Math.max(0, Math.min(300, selectedSlot.stats.nodeEstimate - 250)) / 700) * 100)}%` 
+                      }}
+                    />
+                    <div 
+                      className="bg-rose-500 transition-all duration-300"
+                      style={{ 
+                        width: `${Math.min(100, (Math.max(0, selectedSlot.stats.nodeEstimate - 550) / 700) * 100)}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Practical Advice & Shortucts */}
+                {selectedSlot.stats.nodeEstimate > 550 ? (
+                  <div className="p-2 rounded bg-rose-500/10 border border-rose-500/30 text-rose-200 text-[11px] space-y-1">
+                    <div className="font-semibold flex items-center gap-1 text-rose-300">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>Action Recommended: Simplify Path</span>
+                    </div>
+                    <p className="text-[10.5px] text-rose-300/90 leading-tight">
+                      Raw AI autotrace often creates jagged edges with 1,000+ points. Open this SVG in Inkscape and press <strong className="text-white">Ctrl + L</strong> (Path &gt; Simplify) to clean paths before submitting.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 text-[11px] flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="text-[10.5px]">Clean commercial curve geometry. Passed autotrace inspection.</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Project Average Summary */}
+            <div className="bg-neutral-950 p-2.5 rounded-lg border border-neutral-800 flex items-center justify-between">
               <div>
-                <div className="text-neutral-400 text-[10px]">Average Node Density</div>
-                <div className="text-lg font-mono font-bold text-neutral-100">~{avgNodes} nodes</div>
+                <div className="text-neutral-400 text-[10px]">Average Project Density</div>
+                <div className="text-sm font-mono font-bold text-neutral-100">~{avgNodes} nodes / icon</div>
               </div>
               <div className="text-right">
-                <div className="text-neutral-400 text-[10px]">Auto-Trace Risk</div>
-                <div className="text-xs font-semibold text-emerald-400">LOW (Clean Native)</div>
+                <div className="text-neutral-400 text-[10px]">High Density Outliers</div>
+                <div className={`text-xs font-bold font-mono ${
+                  project.slots.filter(s => s.stats.nodeEstimate > 550).length > 0 ? 'text-amber-400' : 'text-emerald-400'
+                }`}>
+                  {project.slots.filter(s => s.stats.nodeEstimate > 550).length} of {project.slots.length}
+                </div>
               </div>
             </div>
 
-            {/* List slots with complexity breakdown */}
-            <div className="space-y-1.5 max-h-64 overflow-y-auto">
+            {/* List all slots with complexity breakdown */}
+            <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
               {project.slots.map(slot => {
-                const isSpike = avgNodes > 0 && slot.stats.nodeEstimate > avgNodes * 2.2;
+                const isHigh = slot.stats.nodeEstimate > 550;
+                const isModerate = slot.stats.nodeEstimate > 250 && !isHigh;
                 return (
                   <div
                     key={slot.id}
                     onClick={() => onSelectSlot(slot.index)}
                     className={`p-2 rounded border cursor-pointer transition-colors flex items-center justify-between ${
                       selectedSlotIndex === slot.index
-                        ? 'bg-amber-500/10 border-amber-500/40'
-                        : 'bg-neutral-950 border-neutral-800 hover:bg-neutral-800/40'
+                        ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/30'
+                        : (isHigh 
+                            ? 'bg-rose-500/5 border-rose-500/30 hover:bg-rose-500/10'
+                            : 'bg-neutral-950 border-neutral-800 hover:bg-neutral-800/40')
                     }`}
                   >
                     <div className="truncate max-w-[160px]">
-                      <div className="font-medium text-neutral-200 truncate">{slot.label}</div>
+                      <div className="font-medium text-neutral-200 truncate text-xs">{slot.label}</div>
                       <div className="text-[10px] font-mono text-neutral-400">
                         {slot.stats.pathCount} paths • ~{slot.stats.nodeEstimate} nodes
                       </div>
                     </div>
 
-                    {isSpike ? (
-                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded">
-                        High Complexity
+                    {isHigh ? (
+                      <span className="text-[10px] font-bold text-rose-300 bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30">
+                        &gt;550 Bloat
+                      </span>
+                    ) : isModerate ? (
+                      <span className="text-[10px] font-mono text-amber-300 bg-amber-500/15 px-1 py-0.5 rounded">
+                        Moderate
                       </span>
                     ) : (
                       <span className="text-[10px] font-mono text-emerald-400">
-                        Normal
+                        Clean
                       </span>
                     )}
                   </div>

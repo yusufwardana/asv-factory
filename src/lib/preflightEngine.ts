@@ -267,6 +267,43 @@ export function runAdobeStockPreflight(project: Project, existingProjects: Proje
     });
   }
 
+  // Anchor Point & Node Density Audit (Autotrace Jitter Prevention)
+  const populatedSlots = project.slots.filter(s => s.svgContent && s.stats.nodeEstimate > 0);
+  const highDensitySlots = populatedSlots.filter(s => s.stats.nodeEstimate > 550);
+  const extremeDensitySlots = populatedSlots.filter(s => s.stats.nodeEstimate > 1200);
+
+  if (extremeDensitySlots.length > 0) {
+    items.push({
+      id: ADOBE_STOCK_RULES['rule-node-density-complexity'].id,
+      category: 'editability',
+      title: ADOBE_STOCK_RULES['rule-node-density-complexity'].name,
+      status: 'warning',
+      message: `Critical node bloat detected in ${extremeDensitySlots.length} slot(s): ${extremeDensitySlots.map(s => `${s.label} (~${s.stats.nodeEstimate} nodes)`).join(', ')}.`,
+      detail: 'Extremely high node density (>1,200 nodes) indicates raw, unsimplified autotrace. High risk of Adobe Stock "Technical Issues" rejection. Recommendation: Simplify paths in Inkscape (Ctrl+L) or Illustrator (Object > Path > Simplify).'
+    });
+  } else if (highDensitySlots.length > 0) {
+    items.push({
+      id: ADOBE_STOCK_RULES['rule-node-density-complexity'].id,
+      category: 'editability',
+      title: ADOBE_STOCK_RULES['rule-node-density-complexity'].name,
+      status: 'warning',
+      message: `Elevated node density in ${highDensitySlots.length} slot(s): ${highDensitySlots.map(s => `${s.label} (~${s.stats.nodeEstimate} nodes)`).join(', ')}.`,
+      detail: 'Icons with >550 anchor points can appear jagged or jittery. Recommendation: In Inkscape, select paths and press Ctrl+L to simplify nodes.'
+    });
+  } else {
+    const avgNodeCount = populatedSlots.length > 0 
+      ? Math.round(populatedSlots.reduce((acc, s) => acc + s.stats.nodeEstimate, 0) / populatedSlots.length) 
+      : 0;
+    items.push({
+      id: ADOBE_STOCK_RULES['rule-node-density-complexity'].id,
+      category: 'editability',
+      title: ADOBE_STOCK_RULES['rule-node-density-complexity'].name,
+      status: 'pass',
+      message: `Optimal vector node density verified (average ~${avgNodeCount} nodes per icon).`,
+      detail: 'All vector curves constructed cleanly without unoptimized autotrace node bloat.'
+    });
+  }
+
   // ==========================================
   // 8. COLOR AUDIT (PHASE 6)
   // ==========================================

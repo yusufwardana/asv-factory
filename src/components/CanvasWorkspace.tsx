@@ -14,8 +14,12 @@ import {
   Info,
   Check,
   AlertCircle,
-  Repeat
+  Repeat,
+  AlertTriangle,
+  FileArchive,
+  Sparkles
 } from 'lucide-react';
+import JSZip from 'jszip';
 import { IconSlot, Project } from '../types';
 import { ViewMode } from './Header';
 import { createEmptyStats } from '../lib/svgUtils';
@@ -61,10 +65,174 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
     }
   }, [width, height]);
 
+  const [isImportingZip, setIsImportingZip] = useState(false);
+  const [isDraggingOverCanvas, setIsDraggingOverCanvas] = useState(false);
+  const [importNotification, setImportNotification] = useState<{ message: string; type: 'success' | 'warning' | 'info' } | null>(null);
+
+  // Helper to extract clean human-readable title from filename
+  const formatLabelFromFilename = (filename: string): string => {
+    return filename
+      .replace(/\.svg$/i, '')
+      .replace(/^[\d_-]+/, '') // strip leading numbers like 01-, 1_
+      .replace(/[-_]+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, c => c.toUpperCase()) || 'Icon';
+  };
+
+  // Batch applies multiple SVG files into corresponding project slots
+  const applyBatchSvgs = (items: { filename: string; content: string }[]) => {
+    if (items.length === 0) return;
+
+    onUpdateProject(prev => {
+      const nextSlots = [...prev.slots];
+      const usedSlots = new Set<number>();
+      let mappedCount = 0;
+
+      // Pass 1: Match files with explicit numbers (01, 02.. 16)
+      const unassignedItems: { filename: string; content: string }[] = [];
+
+      items.forEach(item => {
+        const match = item.filename.match(/(?:icon[_-]?)?0*(\d+)/i);
+        let targetSlot = -1;
+        if (match) {
+          const parsed = parseInt(match[1], 10);
+          if (parsed >= 1 && parsed <= nextSlots.length && !usedSlots.has(parsed - 1)) {
+            targetSlot = parsed - 1;
+          }
+        }
+
+        if (targetSlot !== -1) {
+          usedSlots.add(targetSlot);
+          const cleanLabel = formatLabelFromFilename(item.filename);
+          const inspected = sanitizeAndInspectSvg(item.content, cleanLabel, targetSlot);
+          nextSlots[targetSlot] = {
+            ...nextSlots[targetSlot],
+            label: cleanLabel || nextSlots[targetSlot].label,
+            svgContent: inspected.cleanSvg,
+            rawSvgContent: item.content,
+            bounds: inspected.viewBox,
+            scale: 1.0,
+            offsetX: 0,
+            offsetY: 0,
+            stats: inspected.stats,
+            sanitizationLog: inspected.logs
+          };
+          mappedCount++;
+        } else {
+          unassignedItems.push(item);
+        }
+      });
+
+      // Pass 2: Assign remaining files to next available empty or unused slots
+      unassignedItems.forEach(item => {
+        let targetSlot = nextSlots.findIndex((s, idx) => !s.svgContent && !usedSlots.has(idx));
+        if (targetSlot === -1) {
+          targetSlot = nextSlots.findIndex((_, idx) => !usedSlots.has(idx));
+        }
+
+        if (targetSlot !== -1) {
+          usedSlots.add(targetSlot);
+          const cleanLabel = formatLabelFromFilename(item.filename);
+          const inspected = sanitizeAndInspectSvg(item.content, cleanLabel, targetSlot);
+          nextSlots[targetSlot] = {
+            ...nextSlots[targetSlot],
+            label: cleanLabel || nextSlots[targetSlot].label,
+            svgContent: inspected.cleanSvg,
+            rawSvgContent: item.content,
+            bounds: inspected.viewBox,
+            scale: 1.0,
+            offsetX: 0,
+            offsetY: 0,
+            stats: inspected.stats,
+            sanitizationLog: inspected.logs
+          };
+          mappedCount++;
+        }
+      });
+
+      return {
+        ...prev,
+        slots: nextSlots,
+        updatedAt: new Date().toISOString()
+      };
+    });
+
+    setImportNotification({
+      message: `Successfully imported & verified ${items.length} SVG icon(s) into slots!`,
+      type: 'success'
+    });
+    setTimeout(() => setImportNotification(null), 4500);
+  };
+
+  // Extract all SVGs from a .ZIP archive
+  const handleZipFile = async (file: File) => {
+    setIsImportingZip(true);
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const svgEntries: { name: string; entry: JSZip.JSZipObject }[] = [];
+
+      zip.forEach((relativePath, entry) => {
+        const lower = relativePath.toLowerCase();
+        if (
+          !entry.dir && 
+          lower.endsWith('.svg') && 
+          !lower.includes('__macosx') && 
+          !lower.split('/').pop()?.startsWith('.')
+        ) {
+          svgEntries.push({
+            name: relativePath.split('/').pop() || relativePath,
+            entry
+          });
+        }
+      });
+
+      if (svgEntries.length === 0) {
+        setImportNotification({
+          message: `No .SVG files found in ${file.name}. Please ensure the ZIP contains vector SVGs.`,
+          type: 'warning'
+        });
+        setTimeout(() => setImportNotification(null), 4500);
+        return;
+      }
+
+      // Sort entries numerically or alphabetically
+      svgEntries.sort((a, b) => {
+        const numA = a.name.match(/\d+/);
+        const numB = b.name.match(/\d+/);
+        if (numA && numB) return parseInt(numA[0], 10) - parseInt(numB[0], 10);
+        return a.name.localeCompare(b.name);
+      });
+
+      const contents = await Promise.all(
+        svgEntries.map(async item => ({
+          filename: item.name,
+          content: await item.entry.async('string')
+        }))
+      );
+
+      applyBatchSvgs(contents);
+    } catch (err) {
+      console.error('Failed to unpack ZIP archive', err);
+      setImportNotification({
+        message: `Failed to unpack ${file.name}. Archive may be corrupt or encrypted.`,
+        type: 'warning'
+      });
+      setTimeout(() => setImportNotification(null), 4500);
+    } finally {
+      setIsImportingZip(false);
+    }
+  };
+
   // Handle single slot file upload
   const handleSlotFileUpload = (e: React.ChangeEvent<HTMLInputElement>, slotIdx: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      handleZipFile(file);
+      e.target.value = '';
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -77,37 +245,37 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
     e.target.value = '';
   };
 
-  // Batch import multiple SVGs
-  const handleBatchImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Batch import multiple SVGs or ZIP archive via file picker
+  const handleBatchImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        if (!content) return;
+    const zipFile = files.find(f => f.name.toLowerCase().endsWith('.zip'));
+    if (zipFile) {
+      await handleZipFile(zipFile);
+      e.target.value = '';
+      return;
+    }
 
-        // Try to match slot index by number in filename e.g. "01-solar-home.svg" -> slot 0
-        const match = file.name.match(/(?:icon[_-]?)?(\d+)/i);
-        let targetSlot = -1;
-        if (match) {
-          const parsed = parseInt(match[1], 10);
-          if (parsed >= 1 && parsed <= project.slots.length) {
-            targetSlot = parsed - 1;
-          }
-        }
+    const svgFiles = files.filter(f => f.name.toLowerCase().endsWith('.svg'));
+    if (svgFiles.length > 0) {
+      const readPromises = svgFiles.map(file => {
+        return new Promise<{ filename: string; content: string }>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve({
+              filename: file.name,
+              content: (event.target?.result as string) || ''
+            });
+          };
+          reader.readAsText(file);
+        });
+      });
 
-        // If no number, find the first empty slot or fallback to matching index
-        if (targetSlot === -1) {
-          targetSlot = project.slots.findIndex(s => !s.svgContent);
-          if (targetSlot === -1) targetSlot = 0;
-        }
+      const loaded = await Promise.all(readPromises);
+      applyBatchSvgs(loaded);
+    }
 
-        applySvgToSlot(content, targetSlot, file.name.replace(/\.svg$/i, ''));
-      };
-      reader.readAsText(file);
-    });
     e.target.value = '';
   };
 
@@ -236,14 +404,14 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
       <input 
         type="file" 
         ref={fileInputRef} 
-        accept=".svg" 
+        accept=".svg,.zip,application/zip" 
         className="hidden" 
         onChange={(e) => selectedSlotIndex !== null && handleSlotFileUpload(e, selectedSlotIndex)} 
       />
       <input 
         type="file" 
         ref={batchFileInputRef} 
-        accept=".svg" 
+        accept=".svg,.zip,application/zip" 
         multiple 
         className="hidden" 
         onChange={handleBatchImport} 
@@ -277,11 +445,16 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           <button
             onClick={() => batchFileInputRef.current?.click()}
             id="btn-batch-import"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors"
-            title="Batch Import up to 16 SVGs (Auto maps by 01, 02.. in filename)"
+            disabled={isImportingZip}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 transition-colors disabled:opacity-50"
+            title="Batch Import SVGs or unextracted .ZIP archive from Inkscape (Auto maps by 01, 02.. in filename)"
           >
-            <Upload className="w-3.5 h-3.5 text-blue-400" />
-            <span>{t('canvas.batchImport')}</span>
+            {isImportingZip ? (
+              <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <FileArchive className="w-3.5 h-3.5 text-blue-400" />
+            )}
+            <span>{isImportingZip ? 'Unpacking ZIP...' : 'Import SVGs / ZIP'}</span>
           </button>
 
           {/* Center All */}
@@ -355,9 +528,73 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
         </div>
       </div>
 
+      {/* Import Notification Toast Banner */}
+      {importNotification && (
+        <div className={`px-4 py-2 text-xs flex items-center justify-between border-b animate-in fade-in shrink-0 ${
+          importNotification.type === 'success'
+            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+            : (importNotification.type === 'warning'
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-200'
+                : 'bg-blue-500/15 border-blue-500/40 text-blue-200')
+        }`}>
+          <div className="flex items-center gap-2">
+            {importNotification.type === 'success' ? (
+              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            )}
+            <span className="font-medium">{importNotification.message}</span>
+          </div>
+          <button
+            onClick={() => setImportNotification(null)}
+            className="text-neutral-400 hover:text-white text-xs px-1.5 py-0.5 rounded hover:bg-neutral-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Main Canvas Scroll Area */}
       <div 
         ref={containerRef}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDraggingOverCanvas(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsDraggingOverCanvas(false);
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDraggingOverCanvas(false);
+          const files = Array.from(e.dataTransfer.files || []);
+          if (files.length === 0) return;
+
+          const zipFile = files.find(f => f.name.toLowerCase().endsWith('.zip'));
+          if (zipFile) {
+            handleZipFile(zipFile);
+            return;
+          }
+
+          const svgFiles = files.filter(f => f.name.toLowerCase().endsWith('.svg'));
+          if (svgFiles.length > 0) {
+            const readPromises = svgFiles.map(file => {
+              return new Promise<{ filename: string; content: string }>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  resolve({
+                    filename: file.name,
+                    content: (ev.target?.result as string) || ''
+                  });
+                };
+                reader.readAsText(file);
+              });
+            });
+            Promise.all(readPromises).then(applyBatchSvgs);
+          }
+        }}
         className="flex-1 overflow-auto p-8 flex items-center justify-center relative bg-neutral-950"
         onClick={(e) => {
           if (e.target === containerRef.current) {
@@ -365,6 +602,15 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
           }
         }}
       >
+        {/* Full-canvas Drag & Drop Overlay */}
+        {isDraggingOverCanvas && (
+          <div className="absolute inset-0 bg-blue-600/20 backdrop-blur-[2px] border-2 border-dashed border-blue-400 z-50 flex flex-col items-center justify-center text-white pointer-events-none">
+            <FileArchive className="w-12 h-12 text-blue-300 animate-bounce mb-2" />
+            <div className="text-base font-bold">Drop .ZIP Archive or SVG Icons Here</div>
+            <div className="text-xs text-blue-200">Automatically extracts and maps up to 16 slots</div>
+          </div>
+        )}
+
         {/* The Artboard Container */}
         <div
           style={{
@@ -454,6 +700,19 @@ export const CanvasWorkspace: React.FC<CanvasWorkspaceProps> = ({
                         {String(idx + 1).padStart(2, '0')}
                       </span>
                     </div>
+
+                    {/* Node Complexity Warning Badge (>550 nodes) */}
+                    {slot.stats.nodeEstimate > 550 && (
+                      <div 
+                        className="absolute top-1 right-1.5 z-10 pointer-events-auto"
+                        title={`High node density (~${slot.stats.nodeEstimate} nodes). Recommended: Simplify in Inkscape (Ctrl+L) to avoid Adobe Stock autotrace rejection.`}
+                      >
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/90 text-white flex items-center gap-0.5 shadow-md border border-rose-400/50">
+                          <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
+                          <span>{slot.stats.nodeEstimate} pts</span>
+                        </span>
+                      </div>
+                    )}
 
                     {/* Artwork Render */}
                     {slot.svgContent ? (

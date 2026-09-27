@@ -9,7 +9,8 @@ import {
   Flame, 
   DatabaseBackup,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  Crop
 } from 'lucide-react';
 import { useI18n } from '../lib/i18n';
 
@@ -21,6 +22,7 @@ export type ActiveTab =
   | 'templates'
   | 'rejections'
   | 'focus-mode'
+  | 'sheet-splitter'
   | 'backup'
   | 'guide';
 
@@ -86,6 +88,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Flame,
       highlight: true,
       desc: t('nav.focusModeDesc')
+    },
+    {
+      id: 'sheet-splitter' as ActiveTab,
+      label: t('nav.sheetSplitter'),
+      icon: Crop,
+      badge: 'AI',
+      badgeColor: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+      desc: t('nav.sheetSplitterDesc')
     },
     {
       id: 'backup' as ActiveTab,

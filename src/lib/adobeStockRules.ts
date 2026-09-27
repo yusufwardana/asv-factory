@@ -240,6 +240,17 @@ export const ADOBE_STOCK_RULES: Record<string, AdobeStockRuleDefinition> = {
     sourceReference: 'Studio Best Practices: Clean Vector Curve & Node Optimization',
     lastVerifiedDate: '2026-03-15',
     rationale: 'Excessive nodes or stray microscopic specks are common symptoms of poor autotracing and trigger Quality rejections.'
+  },
+  'rule-node-density-complexity': {
+    id: 'rule-node-density-complexity',
+    name: 'Vector Path & Node Density Quality (Autotrace Audit)',
+    type: 'INTERNAL_HEURISTIC',
+    description: 'Audits anchor point count and node density per vector icon. Detects jagged, jittery paths typical of raw autotrace that trigger Adobe Stock technical quality rejections.',
+    defaultSeverity: 'warning',
+    applicableAssetTypes: ALL_ASSET_TYPES,
+    sourceReference: 'Adobe Stock Contributor Guidelines: Technical Quality & Vector Path Integrity',
+    lastVerifiedDate: '2026-03-26',
+    rationale: 'Unoptimized autotracing generates hundreds of unnecessary anchor points, jagged curves, and bloated file sizes, leading to immediate rejection by curators.'
   }
 };
 

@@ -14,7 +14,8 @@ import {
   Cpu,
   Trash2,
   Lock,
-  Sparkles
+  Sparkles,
+  FileSpreadsheet
 } from 'lucide-react';
 import JSZip from 'jszip';
 import confetti from 'canvas-confetti';
@@ -27,6 +28,7 @@ import {
   ExportVerificationResult,
   removeLiveTextFromSvg
 } from '../lib/svgUtils';
+import { generateAdobeStockCsv, downloadCsvString } from '../lib/adobeStockCsv';
 import { 
   checkProjectSimilarity, 
   checkProjectSimilarityFromDB, 
@@ -92,6 +94,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const svgFilename = `${baseSlug}.svg`;
   const qcFilename = `${baseSlug}-qc-report.json`;
   const metaFilename = `${baseSlug}-metadata.txt`;
+  const csvFilename = `${baseSlug}-adobe-stock.csv`;
   const zipFilename = `${baseSlug}-stock-package.zip`;
 
   const topMatch = auditResult.topMatch;
@@ -100,6 +103,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const canExport = (!isHighRisk || overrideAcknowledged) && (!hasLiveText || project.assetType !== 'icon-sheet');
 
   const metadataText = generateMetadataText(project);
+  const adobeStockCsv = generateAdobeStockCsv(project, { includeIndividualSlots: true });
 
   const downloadFile = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });
@@ -158,7 +162,12 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     downloadFile(metadataText, metaFilename, 'text/plain');
   };
 
-  // 4. Download Complete Package (ZIP)
+  // 4. Download Adobe Stock Official Bulk CSV
+  const handleDownloadAdobeStockCsv = () => {
+    downloadCsvString(adobeStockCsv, csvFilename);
+  };
+
+  // 5. Download Complete Package (ZIP)
   const handleDownloadPackageZip = async () => {
     if (!canExport) return;
     setIsExporting(true);
@@ -169,6 +178,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
       // Add Stock SVG
       folder.file(svgFilename, standaloneSvg);
+
+      // Add Official Adobe Stock Bulk CSV
+      folder.file(csvFilename, adobeStockCsv);
 
       // Add QC Report JSON with SHA-256
       folder.file(qcFilename, JSON.stringify(qcReport, null, 2));
@@ -480,6 +492,26 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs border border-neutral-700 transition-colors"
                   >
                     Download TXT
+                  </button>
+                </div>
+
+                <div className="bg-neutral-950 p-2.5 rounded border border-purple-500/30 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-purple-400" />
+                    <div>
+                      <div className="font-mono font-bold text-xs text-neutral-200 flex items-center gap-1.5">
+                        <span>{csvFilename}</span>
+                        <span className="text-[9px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-semibold">Official Format</span>
+                      </div>
+                      <div className="text-[10px] text-neutral-400">Official Adobe Stock bulk upload CSV (Filename, Title, Keywords, Category)</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleDownloadAdobeStockCsv}
+                    className="px-2.5 py-1 rounded bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 text-xs border border-purple-500/40 font-semibold transition-colors flex items-center gap-1"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>Download CSV</span>
                   </button>
                 </div>
               </div>

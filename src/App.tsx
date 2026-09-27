@@ -25,6 +25,7 @@ import { DailyProductionWizard } from './components/DailyProductionWizard';
 import { TemplatesView } from './components/TemplatesView';
 import { BackupView } from './components/BackupView';
 import { ProjectsView } from './components/ProjectsView';
+import { AiSheetSplitterView } from './components/AiSheetSplitterView';
 
 // Modals
 import { PreflightModal } from './components/PreflightModal';
@@ -456,6 +457,12 @@ function AppContent() {
               setActiveProjectId(projects[nextIdx].id);
             }}
           />
+        )}
+
+        {activeTab === 'sheet-splitter' && (
+          <div className="flex-1 overflow-hidden flex flex-col bg-neutral-950">
+            <AiSheetSplitterView />
+          </div>
         )}
 
         {activeTab === 'backup' && (

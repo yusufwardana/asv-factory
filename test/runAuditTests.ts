@@ -2,6 +2,7 @@ import { sanitizeAndInspectSvg, generateStandaloneStockSvg, generateQCReport, ve
 import { runAdobeStockPreflight } from '../src/lib/preflightEngine';
 import { createDefaultProject, getStoredProjects, saveProject } from '../src/lib/storage';
 import { FIXTURES } from './fixtures/svgFixtures';
+import { runSheetSplitterTests } from './sheetSplitterTests';
 import { JSDOM } from 'jsdom';
 
 // Setup browser globals for headless Node environment if needed
@@ -180,6 +181,70 @@ async function runAllTests() {
     assert(qcReport.provenance.generativeAiDisclosureRequiredOnUpload === true, 'QC report specifies AI disclosure required on upload');
     assert(qcReport.vectorAudit.pureVector === true, 'QC report states pureVector === true');
     assert(qcReport.vectorAudit.transparencyElements > 0, 'Bug C: QC report audits and records transparency elements');
+  }
+
+  // ----------------------------------------------------
+  // TEST GROUP 8: AI SHEET SPLITTER UNIT TESTS
+  // ----------------------------------------------------
+  await runSheetSplitterTests(assert);
+
+  // ----------------------------------------------------
+  // TEST GROUP 9: ADOBE STOCK CSV, ZIP & NODE DENSITY AUDIT
+  // ----------------------------------------------------
+  console.log('\n--- TEST GROUP 9: Adobe Stock Bulk CSV, ZIP & Node Density Audit ---');
+  {
+    const { generateAdobeStockCsv, resolveAdobeStockCategoryId, escapeCsvValue } = await import('../src/lib/adobeStockCsv');
+    const JSZip = (await import('jszip')).default;
+
+    // 1. Category Resolution
+    assert(resolveAdobeStockCategoryId('Residential Solar Energy') === 5, 'Resolves "Solar Energy" to Category 5 (The Environment)');
+    assert(resolveAdobeStockCategoryId('Vector Icons Set') === 8, 'Resolves "Vector Icons" to Category 8 (Graphic Resources)');
+    assert(resolveAdobeStockCategoryId('Cloud AI Technology') === 19, 'Resolves "Technology" to Category 19 (Technology)');
+
+    // 2. CSV Value Escaping
+    assert(escapeCsvValue('Solar Home') === '"Solar Home"', 'Wraps text in standard CSV quotes');
+    assert(escapeCsvValue('Solar, Energy & "Battery"') === '"Solar, Energy & ""Battery"""', 'Properly escapes internal quotes and commas according to RFC 4180');
+
+    // 3. Generate Official Adobe Stock CSV
+    const defaultProj = createDefaultProject();
+    const csvContent = generateAdobeStockCsv(defaultProj, { includeIndividualSlots: true });
+    const csvLines = csvContent.split(/\r?\n/).filter(Boolean);
+
+    assert(csvLines[0] === 'Filename,Title,Keywords,Category', 'Adobe Stock CSV Header matches specification (Filename,Title,Keywords,Category)');
+    assert(csvLines.length >= 17, `Generated CSV contains full sheet + 16 slot rows (got ${csvLines.length} lines)`);
+    assert(csvLines[1].includes('.svg'), 'First data row is the main vector artboard file');
+    assert(csvLines[2].startsWith('"01-'), 'Second data row contains the first icon slot (01-*.svg)');
+
+    // 4. Batch ZIP Packing & Extraction
+    const zip = new JSZip();
+    zip.file('01-solar-home.svg', '<svg viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>');
+    zip.file('02-solar-panel.svg', '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20"/></svg>');
+    zip.file('README.txt', 'This should be ignored by the SVG importer');
+
+    const zipBlob = await zip.generateAsync({ type: 'uint8array' });
+    const loadedZip = await JSZip.loadAsync(zipBlob);
+    
+    const extractedSvgs: string[] = [];
+    loadedZip.forEach((path, entry) => {
+      if (!entry.dir && path.endsWith('.svg')) extractedSvgs.push(path);
+    });
+
+    assert(extractedSvgs.length === 2, `JSZip successfully extracts exactly 2 SVGs (got ${extractedSvgs.length})`);
+    assert(extractedSvgs.includes('01-solar-home.svg'), 'Extracted 01-solar-home.svg');
+    assert(extractedSvgs.includes('02-solar-panel.svg'), 'Extracted 02-solar-panel.svg');
+
+    // 5. Node Density & Autotrace Jitter Preflight Audit
+    // Create project with a slot having excessive nodes (>550)
+    const denseProject = JSON.parse(JSON.stringify(defaultProj));
+    denseProject.slots[0].stats.nodeEstimate = 950;
+    denseProject.slots[0].svgContent = '<svg viewBox="0 0 24 24"><path d="M0 0"/></svg>';
+
+    const preflightRes = runAdobeStockPreflight(denseProject);
+    const nodeDensityItem = preflightRes.items.find(i => i.id === 'rule-node-density-complexity');
+
+    assert(nodeDensityItem !== undefined, 'Preflight contains rule-node-density-complexity check');
+    assert(nodeDensityItem?.status === 'warning', 'Correctly flags slot with 950 nodes as warning');
+    assert(nodeDensityItem?.message.includes('950 nodes') === true, 'Preflight warning mentions node count (950 nodes)');
   }
 
   // ----------------------------------------------------

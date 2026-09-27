@@ -10,10 +10,18 @@ import {
   AlertTriangle, 
   Check, 
   Wand2,
-  FileCheck
+  FileCheck,
+  Download,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Project, AssetMetadata } from '../types';
 import { useI18n } from '../lib/i18n';
+import { 
+  ADOBE_STOCK_CATEGORIES, 
+  resolveAdobeStockCategoryId, 
+  generateAdobeStockCsv, 
+  downloadCsvString 
+} from '../lib/adobeStockCsv';
 
 interface MetadataStudioModalProps {
   isOpen: boolean;
@@ -46,6 +54,8 @@ export const MetadataStudioModal: React.FC<MetadataStudioModalProps> = ({
   const [showBatchInput, setShowBatchInput] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [csvCopied, setCsvCopied] = useState(false);
+  const [includeSlotsInCsv, setIncludeSlotsInCsv] = useState(true);
 
   // Generator form fields
   const [genSubject, setGenSubject] = useState(project.niche || 'Solar Energy');
@@ -300,14 +310,16 @@ export const MetadataStudioModal: React.FC<MetadataStudioModalProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-neutral-300 font-semibold block mb-1">Stock Category</label>
+                <label className="text-neutral-300 font-semibold block mb-1">Adobe Stock Official Category</label>
                 <select
                   value={meta.category}
                   onChange={(e) => updateMetadata({ category: e.target.value })}
                   className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-2.5 py-2 text-xs text-neutral-200 focus:outline-none focus:border-amber-400"
                 >
-                  {STOCK_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {ADOBE_STOCK_CATEGORIES.map(cat => (
+                    <option key={cat.id} value={cat.name}>
+                      #{cat.id} - {cat.name} ({cat.description})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -322,6 +334,59 @@ export const MetadataStudioModal: React.FC<MetadataStudioModalProps> = ({
                   placeholder="e.g. Clean monoline stroke with color fill"
                 />
               </div>
+            </div>
+
+            {/* Adobe Stock Bulk CSV Fast-Export Box */}
+            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="w-4 h-4 text-purple-400" />
+                  <span className="font-semibold text-neutral-200 text-xs">Adobe Stock Bulk Metadata CSV</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[10.5px] text-neutral-400 flex items-center gap-1 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={includeSlotsInCsv}
+                      onChange={(e) => setIncludeSlotsInCsv(e.target.checked)}
+                      className="rounded accent-purple-500 w-3 h-3"
+                    />
+                    <span>Include 16 Icon Slots</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const csvText = generateAdobeStockCsv(project, { includeIndividualSlots: includeSlotsInCsv });
+                      navigator.clipboard.writeText(csvText);
+                      setCsvCopied(true);
+                      setTimeout(() => setCsvCopied(false), 2000);
+                    }}
+                    className="px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-[11px] border border-neutral-700 flex items-center gap-1"
+                  >
+                    {csvCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{csvCopied ? 'Copied' : 'Copy CSV'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const baseSlug = (project.metadata.title || project.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                      const csvText = generateAdobeStockCsv(project, { includeIndividualSlots: includeSlotsInCsv });
+                      downloadCsvString(csvText, `${baseSlug}-adobe-stock.csv`);
+                    }}
+                    className="px-2.5 py-1 rounded bg-purple-500 hover:bg-purple-400 text-neutral-950 font-bold text-[11px] flex items-center gap-1 transition-colors shadow-sm"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>Download .CSV</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-[10.5px] text-neutral-400 font-mono bg-neutral-950 p-2 rounded border border-neutral-800/80 overflow-x-auto whitespace-pre">
+                {generateAdobeStockCsv(project, { includeIndividualSlots: false })}
+              </div>
+              <p className="text-[10px] text-purple-300/80">
+                Upload this CSV in the Adobe Stock Contributor Portal (Uploaded Files &gt; Upload CSV) to auto-fill Title, Keywords, and Category for all files in seconds.
+              </p>
             </div>
           </div>
 

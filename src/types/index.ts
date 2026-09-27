@@ -291,3 +291,84 @@ export interface DailyMetrics {
   accepted: number;
   rejected: number;
 }
+
+// ----------------------------------------------------
+// AI ICON SHEET SPLITTER TYPES
+// ----------------------------------------------------
+
+export interface SplitterGridConfig {
+  rows: number;
+  cols: number;
+  marginX: number; // in pixels
+  marginY: number; // in pixels
+  gapX: number;    // in pixels
+  gapY: number;    // in pixels
+  offsetX: number; // in pixels
+  offsetY: number; // in pixels
+}
+
+export interface CellCropOverride {
+  cellIndex: number;
+  offsetX: number;
+  offsetY: number;
+  expandWidth: number;
+  expandHeight: number;
+}
+
+export interface SplitCellResult {
+  index: number;
+  row: number;
+  col: number;
+  label: string;
+  filename: string;
+  bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  dataUrl: string;
+  blob?: Blob;
+  width: number;
+  height: number;
+  warnings: string[];
+  isTrimmed?: boolean;
+}
+
+export interface SplitManifest {
+  tool: string;
+  version: string;
+  grid: string;
+  icons: number;
+  sourceFilename: string;
+  sourceWidth: number;
+  sourceHeight: number;
+  margins: { marginX: number; marginY: number };
+  gaps: { gapX: number; gapY: number };
+  offsets: { offsetX: number; offsetY: number };
+  paddingPercent: number;
+  generatedAt: string;
+  iconFilenames: string[];
+  cells: Array<{
+    index: number;
+    label: string;
+    filename: string;
+    width: number;
+    height: number;
+    warnings: string[];
+  }>;
+}
+
+export interface SplitterPreset {
+  id: string;
+  name: string;
+  rows: number;
+  cols: number;
+  marginX: number;
+  marginY: number;
+  gapX: number;
+  gapY: number;
+  offsetX: number;
+  offsetY: number;
+  paddingPercent: number;
+}
